@@ -14,8 +14,6 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddInjection();
 
-//builder.Services.AddInjection();
-
 builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));

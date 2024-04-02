@@ -21,6 +21,10 @@ namespace DAL.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Contribution")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Count")
                         .HasColumnType("INTEGER");
 

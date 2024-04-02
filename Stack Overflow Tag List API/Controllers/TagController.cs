@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Model;
 using Stack_Overflow_Tag_List_API.Interfaces;
+using System.Runtime.CompilerServices;
 
 namespace Stack_Overflow_Tag_List_API.Controllers
 {
@@ -9,12 +10,14 @@ namespace Stack_Overflow_Tag_List_API.Controllers
     public class TagController : ControllerBase
     {
         private readonly ITagService _tagService;
-        public TagController(ITagService tagService)
+        private readonly ITagRepository _tagRepository;
+        public TagController(ITagService tagService, ITagRepository tagRepository)
         {
             _tagService = tagService;
+            _tagRepository = tagRepository;
         }
 
-        [HttpGet("GetFromStackOverflow")]
+        [HttpGet("Get_tags_from_StackOverflow")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<Tag>))]
         [ProducesResponseType(500)]
         public IActionResult GetFromStackOverflow()
@@ -24,12 +27,53 @@ namespace Stack_Overflow_Tag_List_API.Controllers
                 return BadRequest("Something went wrong");
             }
 
-            if(!_tagService.GetTags().Result)
+            if(!_tagService.PutTagsToRepository())
             {
                 return BadRequest("Something went wrong while saving");
             }
 
             return Ok("Correctly downloaded files");
         }
+
+        [HttpGet("Get_Tags_by_Name")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Tag>))]
+        [ProducesResponseType(400)]
+        public IActionResult GetTagsByName(bool isAscending)
+        {
+            if(!_tagRepository.AnyTagExists())
+            {
+                return NotFound("Database is empty");
+            }
+
+            var result = _tagRepository.GetAllTagsSortedByName(isAscending);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("Get_Tags_by_Count")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Tag>))]
+        [ProducesResponseType(400)]
+        public IActionResult GetTagsByCount(bool isAscending)
+        {
+            if (!_tagRepository.AnyTagExists())
+            {
+                return NotFound("Database is empty");
+            }
+
+            var result = _tagRepository.GetAllTagsSortedByCount(isAscending);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
     }
 }
