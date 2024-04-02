@@ -2,7 +2,6 @@
 {
     public interface ITagService
     {
-        bool GetTags();
-        bool IsSiteOnline();
+        Task<bool> GetTags();
     }
 }

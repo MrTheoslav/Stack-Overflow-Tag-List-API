@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using Stack_Overflow_Tag_List_API.Interfaces;
 using System.Net;
 using System;
+using System.Text;
+using System.IO.Compression;
 
 namespace Stack_Overflow_Tag_List_API.Services
 {
@@ -22,6 +24,7 @@ namespace Stack_Overflow_Tag_List_API.Services
 
     public class TagService : ITagService
     {
+        private int tagNumber = 1;   
         private List<Tag> tags;
         private readonly IDatabaseTagService _dataTagService;
 
@@ -31,66 +34,44 @@ namespace Stack_Overflow_Tag_List_API.Services
             _dataTagService = databaseTagService;
         }
 
-        public bool GetTags()
+        public async Task<bool> GetTags()
         {
             int count = -1;
-            for (int i = 1; count == tags.Count(); i++)
+            for (int i = 1; tags.Count() < 1000; i++)
             {
                 count = tags.Count();
-                GetTagsFromPage(i);
+                await GetTagsFromPage(i);
             }
-            return _dataTagService.AddTags(tags);
-        }
-
-        public bool IsSiteOnline()
-        {
-            string url = "https://api.stackexchange.com/docs/tags#pagesize=1&order=desc&sort=popular&filter=!bMsg5CXICdlFSp&site=stackoverflow";
-
-            try
-            {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = "GET";
-
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        Console.WriteLine("The connection to the website is active.");
-                        return true;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Failed to connect to the website. Response code: {response.StatusCode}");
-                        return false;
-                    }
-                }
-            }
-            catch (WebException ex)
-            {
-                Console.WriteLine($"An error has occurred while trying to connect to the website: {ex.Message}");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
-                return false;
-            }
+            return true;//_dataTagService.AddTags(tags);
         }
 
         private async Task GetTagsFromPage(int page)
         {
-
-            using (var httpClient = new HttpClient())
+            try
             {
-                var response = await httpClient.GetAsync($"https://api.stackexchange.com/docs/tags#page={page}&order=desc&sort=popular&filter=!bMsg5CXICdlFSp&site=stackoverflow");
-                var jsonContent = await response.Content.ReadAsStringAsync();
-
-                var items = JsonConvert.DeserializeObject<ItemResponse>(jsonContent);
-
-                foreach (var item in items.Items)
+                using (var httpClient = new HttpClient())
                 {
-                    tags.Add(new Tag { Name = item.Name, Count = item.Count });
+                   
+                    var response = await httpClient.GetStreamAsync($"https://api.stackexchange.com/2.3/tags?page={page}&pagesize=100&order=desc&sort=popular&site=stackoverflow&filter=!21k7qaosV)V8y5XQ1QjJd");
+                    GZipStream gs = new GZipStream(response, CompressionMode.Decompress);
+                    var ms = new MemoryStream();
+                    gs.CopyTo(ms);
+                    var jsonContent = Encoding.UTF8.GetString(ms.ToArray());
+                    var items = JsonConvert.DeserializeObject<ItemResponse>(jsonContent);
+
+                    foreach (var item in items.Items)
+                    {
+                        
+                        _dataTagService.AddTag(new Tag { Name = item.Name, Count = item.Count });
+                        Console.WriteLine($"Tag Added: Tag number: {tagNumber}, Name: {item.Name}, Count: {item.Count}");
+                        tagNumber++;
+                        tags.Add(new Tag { Name = item.Name, Count = item.Count });
+                    }
                 }
+            }
+            catch(Exception ex)
+            {
+                throw ex;
             }
         }
     }

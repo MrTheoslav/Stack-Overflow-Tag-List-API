@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240329133302_InitialCreate")]
+    [Migration("20240402110023_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -21,18 +21,13 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Model.Tag", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Count")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
+                    b.HasKey("Name");
 
                     b.ToTable("Tags");
                 });

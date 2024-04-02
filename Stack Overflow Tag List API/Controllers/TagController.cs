@@ -23,13 +23,8 @@ namespace Stack_Overflow_Tag_List_API.Controllers
             {
                 return BadRequest("Something went wrong");
             }
-            
-            if(!_tagService.IsSiteOnline())
-            {
-                return BadRequest("Site is not available");
-            }
 
-            if(!_tagService.GetTags())
+            if(!_tagService.GetTags().Result)
             {
                 return BadRequest("Something went wrong while saving");
             }
